@@ -1,244 +1,649 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --bg: #080808;
+    --surface: #111111;
+    --surface-2: #171717;
+    --border: #242424;
+
+    --text: #f2f2f2;
+    --muted: #858585;
+
+    --purple: #8b5cf6;
+    --red: #ef4444;
+
+    --player-height: 92px;
+}
 
-    <title>VS Player</title>
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: Arial, Helvetica, sans-serif;
+    overflow: hidden;
+}
 
-    <link rel="stylesheet" href="style.css">
-</head>
+button,
+select {
+    font: inherit;
+}
 
-<body>
+button {
+    border: 0;
+    cursor: pointer;
+}
 
-    <div class="app">
 
-        <!-- Menu lateral -->
-        <aside class="sidebar">
+/* =========================
+   APP
+========================= */
 
-            <div class="brand">
-                <div class="brand-logo">VS</div>
-                <span>VS Player</span>
-            </div>
+.app {
+    width: 100vw;
+    height: 100vh;
+}
 
-            <nav class="navigation">
 
-                <button class="nav-item active" data-page="music">
-                    <span>♫</span>
-                    <span>Músicas</span>
-                </button>
+/* =========================
+   SIDEBAR
+========================= */
 
-                <button class="nav-item" data-page="folders">
-                    <span>▣</span>
-                    <span>Pastas</span>
-                </button>
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
 
-                <button class="nav-item" data-page="playlists">
-                    <span>☷</span>
-                    <span>Playlists</span>
-                </button>
+    width: 240px;
+    height: calc(100vh - var(--player-height));
 
-                <button class="nav-item" data-page="favorites">
-                    <span>♡</span>
-                    <span>Favoritos</span>
-                </button>
+    background: #0b0b0b;
+    border-right: 1px solid var(--border);
 
-                <button class="nav-item" data-page="history">
-                    <span>◷</span>
-                    <span>Histórico</span>
-                </button>
+    padding: 24px 14px;
 
-            </nav>
+    display: flex;
+    flex-direction: column;
+}
 
-            <div class="sidebar-bottom">
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 
-                <button class="nav-item" data-page="settings">
-                    <span>⚙</span>
-                    <span>Configurações</span>
-                </button>
+    padding: 0 10px;
+    margin-bottom: 38px;
 
-            </div>
+    font-size: 18px;
+    font-weight: 700;
+}
 
-        </aside>
+.brand-logo {
+    width: 38px;
+    height: 38px;
 
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-        <!-- Conteúdo principal -->
-        <main class="main-content">
+    border-radius: 11px;
 
-            <header class="topbar">
+    background: linear-gradient(
+        135deg,
+        var(--purple),
+        var(--red)
+    );
 
-                <div>
-                    <p class="page-label">BIBLIOTECA</p>
-                    <h1 id="page-title">Músicas</h1>
-                </div>
+    color: white;
+    font-size: 13px;
+    font-weight: 800;
+}
 
-                <button class="add-button" id="add-music">
-                    <span>＋</span>
-                    Adicionar músicas
-                </button>
+.navigation {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
 
-            </header>
+.nav-item {
+    width: 100%;
 
+    display: flex;
+    align-items: center;
+    gap: 14px;
 
-            <!-- Biblioteca -->
-            <section class="page active-page" id="page-music">
+    padding: 12px 14px;
 
-                <div class="library-header">
+    border-radius: 10px;
 
-                    <div>
-                        <h2>Suas músicas</h2>
-                        <p id="music-count">0 músicas</p>
-                    </div>
+    background: transparent;
+    color: var(--muted);
 
-                    <select id="sort-select">
-                        <option value="recent">Mais recentes</option>
-                        <option value="oldest">Mais antigas</option>
-                        <option value="az">Nome A–Z</option>
-                        <option value="za">Nome Z–A</option>
-                        <option value="artist">Artista</option>
-                        <option value="album">Álbum</option>
-                        <option value="played">Mais reproduzidas</option>
-                        <option value="duration">Duração</option>
-                    </select>
+    text-align: left;
 
-                </div>
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
+}
 
+.nav-item span:first-child {
+    width: 20px;
 
-                <div class="empty-library" id="empty-library">
+    font-size: 20px;
+    text-align: center;
+}
 
-                    <div class="empty-icon">♫</div>
+.nav-item:hover {
+    background: var(--surface);
+    color: var(--text);
+}
 
-                    <h2>Sua biblioteca está vazia</h2>
+.nav-item.active {
+    background: linear-gradient(
+        90deg,
+        rgba(139, 92, 246, 0.16),
+        rgba(239, 68, 68, 0.08)
+    );
 
-                    <p>
-                        Adicione suas músicas para começar a usar o VS Player.
-                    </p>
+    color: white;
+}
 
-                    <button class="primary-button" id="empty-add">
-                        Adicionar músicas
-                    </button>
+.sidebar-bottom {
+    margin-top: auto;
+}
 
-                </div>
 
-                <div class="music-grid" id="music-grid"></div>
+/* =========================
+   MAIN
+========================= */
 
-            </section>
+.main-content {
+    margin-left: 240px;
 
+    height: calc(100vh - var(--player-height));
 
-            <!-- Pastas -->
-            <section class="page" id="page-folders">
-                <div class="section-placeholder">
-                    <span>▣</span>
-                    <h2>Pastas</h2>
-                    <p>Suas pastas aparecerão aqui.</p>
-                </div>
-            </section>
+    padding: 30px 34px;
 
+    overflow-y: auto;
+}
 
-            <!-- Playlists -->
-            <section class="page" id="page-playlists">
-                <div class="section-placeholder">
-                    <span>☷</span>
-                    <h2>Playlists</h2>
-                    <p>Suas playlists aparecerão aqui.</p>
-                </div>
-            </section>
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 
+    margin-bottom: 40px;
+}
 
-            <!-- Favoritos -->
-            <section class="page favorites-page" id="page-favorites">
+.page-label {
+    color: var(--muted);
 
-                <div class="favorites-banner">
-                    <h1>FAVORITOS</h1>
-                </div>
+    font-size: 11px;
+    font-weight: 700;
 
-                <div class="music-grid" id="favorites-grid"></div>
+    letter-spacing: 2px;
 
-            </section>
+    margin-bottom: 6px;
+}
 
+.topbar h1 {
+    font-size: 32px;
+}
 
-            <!-- Histórico -->
-            <section class="page" id="page-history">
-                <div class="section-placeholder">
-                    <span>◷</span>
-                    <h2>Histórico</h2>
-                    <p>Seu histórico mensal aparecerá aqui.</p>
-                </div>
-            </section>
+.add-button,
+.primary-button {
+    padding: 12px 18px;
 
+    border-radius: 10px;
 
-            <!-- Configurações -->
-            <section class="page" id="page-settings">
-                <div class="section-placeholder">
-                    <span>⚙</span>
-                    <h2>Configurações</h2>
-                    <p>As configurações do VS Player aparecerão aqui.</p>
-                </div>
-            </section>
+    background: linear-gradient(
+        135deg,
+        var(--purple),
+        #7041d8
+    );
 
-        </main>
+    color: white;
 
+    font-weight: 700;
 
-        <!-- Player inferior -->
-        <div class="mini-player">
+    transition:
+        transform 0.2s ease,
+        opacity 0.2s ease;
+}
 
-            <div class="now-playing">
+.add-button:hover,
+.primary-button:hover {
+    transform: translateY(-2px);
+    opacity: 0.9;
+}
 
-                <div class="mini-cover"></div>
 
-                <div class="track-info">
-                    <strong id="mini-title">Nenhuma música</strong>
-                    <span id="mini-artist">Selecione uma música</span>
-                </div>
+/* =========================
+   PAGES
+========================= */
 
-            </div>
+.page {
+    display: none;
+}
 
+.page.active-page {
+    display: block;
+}
 
-            <div class="player-controls">
 
-                <button id="previous-button">◀</button>
+/* =========================
+   LIBRARY
+========================= */
 
-                <button class="play-button" id="play-button">
-                    ▶
-                </button>
+.library-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 
-                <button id="next-button">▶</button>
+    margin-bottom: 24px;
+}
 
-            </div>
+.library-header h2 {
+    font-size: 19px;
+}
 
+.library-header p {
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 5px;
+}
 
-            <div class="player-progress">
+#sort-select {
+    background: var(--surface);
+    color: var(--text);
 
-                <span id="current-time">0:00</span>
+    border: 1px solid var(--border);
 
-                <input
-                    type="range"
-                    id="progress-bar"
-                    min="0"
-                    max="100"
-                    value="0"
-                >
+    padding: 9px 12px;
 
-                <span id="total-time">0:00</span>
+    border-radius: 8px;
 
-            </div>
+    outline: none;
+}
 
-        </div>
 
-    </div>
+/* =========================
+   EMPTY LIBRARY
+========================= */
 
+.empty-library {
+    min-height: 420px;
 
-    <!-- Arquivo de músicas -->
-    <input
-        type="file"
-        id="music-input"
-        accept="audio/*"
-        multiple
-        hidden
-    >
+    display: flex;
+    flex-direction: column;
 
+    align-items: center;
+    justify-content: center;
 
-    <script src="script.js"></script>
+    text-align: center;
+}
 
-</body>
-</html>
+.empty-icon {
+    width: 76px;
+    height: 76px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-bottom: 20px;
+
+    border-radius: 22px;
+
+    background: linear-gradient(
+        135deg,
+        rgba(139, 92, 246, 0.18),
+        rgba(239, 68, 68, 0.12)
+    );
+
+    color: var(--purple);
+
+    font-size: 34px;
+}
+
+.empty-library h2 {
+    font-size: 20px;
+    margin-bottom: 8px;
+}
+
+.empty-library p {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 22px;
+}
+
+
+/* =========================
+   MUSIC GRID
+========================= */
+
+.music-grid {
+    display: grid;
+
+    grid-template-columns: repeat(
+        auto-fill,
+        minmax(160px, 1fr)
+    );
+
+    gap: 24px;
+}
+
+.music-card {
+    min-width: 0;
+}
+
+.music-cover {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+
+    border-radius: 12px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #202020,
+            #101010
+        );
+
+    border: 1px solid var(--border);
+
+    margin-bottom: 11px;
+}
+
+.music-card h3 {
+    overflow: hidden;
+
+    white-space: nowrap;
+    text-overflow: ellipsis;
+
+    font-size: 14px;
+}
+
+.music-card p {
+    overflow: hidden;
+
+    white-space: nowrap;
+    text-overflow: ellipsis;
+
+    margin-top: 5px;
+
+    color: var(--muted);
+
+    font-size: 12px;
+}
+
+
+/* =========================
+   PLACEHOLDERS
+========================= */
+
+.section-placeholder {
+    min-height: 500px;
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+
+    color: var(--muted);
+}
+
+.section-placeholder span {
+    font-size: 42px;
+    margin-bottom: 18px;
+}
+
+.section-placeholder h2 {
+    color: var(--text);
+    margin-bottom: 8px;
+}
+
+.section-placeholder p {
+    font-size: 14px;
+}
+
+
+/* =========================
+   FAVORITES
+========================= */
+
+.favorites-banner {
+    height: 130px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-bottom: 30px;
+
+    border-radius: 18px;
+
+    overflow: hidden;
+
+    background:
+        radial-gradient(
+            circle at 25% 50%,
+            rgba(139, 92, 246, 0.65),
+            transparent 45%
+        ),
+        radial-gradient(
+            circle at 75% 50%,
+            rgba(239, 68, 68, 0.55),
+            transparent 45%
+        ),
+        #111;
+
+    border: 1px solid var(--border);
+}
+
+.favorites-banner h1 {
+    font-size: 25px;
+    letter-spacing: 5px;
+}
+
+
+/* =========================
+   MINI PLAYER
+========================= */
+
+.mini-player {
+    position: fixed;
+
+    bottom: 0;
+    left: 0;
+
+    width: 100%;
+    height: var(--player-height);
+
+    background: rgba(12, 12, 12, 0.97);
+
+    border-top: 1px solid var(--border);
+
+    display: grid;
+
+    grid-template-columns: 1fr auto 1fr;
+
+    align-items: center;
+
+    padding: 0 24px;
+
+    z-index: 100;
+}
+
+.now-playing {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.mini-cover {
+    width: 52px;
+    height: 52px;
+
+    border-radius: 8px;
+
+    background: #191919;
+}
+
+.track-info {
+    display: flex;
+    flex-direction: column;
+
+    gap: 5px;
+
+    min-width: 0;
+}
+
+.track-info strong {
+    max-width: 220px;
+
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+
+    font-size: 13px;
+}
+
+.track-info span {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.player-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.player-controls button {
+    width: 34px;
+    height: 34px;
+
+    border-radius: 50%;
+
+    background: transparent;
+    color: var(--text);
+}
+
+.player-controls button:hover {
+    background: var(--surface-2);
+}
+
+.player-controls .play-button {
+    width: 44px;
+    height: 44px;
+
+    background: white;
+    color: black;
+
+    font-size: 14px;
+}
+
+.player-progress {
+    display: flex;
+    align-items: center;
+
+    justify-content: flex-end;
+
+    gap: 9px;
+
+    color: var(--muted);
+
+    font-size: 10px;
+}
+
+#progress-bar {
+    width: 180px;
+    accent-color: var(--purple);
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 800px) {
+
+    .sidebar {
+        width: 72px;
+        padding: 18px 9px;
+    }
+
+    .brand {
+        justify-content: center;
+        padding: 0;
+    }
+
+    .brand span,
+    .nav-item span:last-child {
+        display: none;
+    }
+
+    .nav-item {
+        justify-content: center;
+        padding: 12px 0;
+    }
+
+    .main-content {
+        margin-left: 72px;
+        padding: 24px 18px;
+    }
+
+    .topbar h1 {
+        font-size: 25px;
+    }
+
+    .add-button {
+        font-size: 0;
+        padding: 11px 13px;
+    }
+
+    .add-button span {
+        font-size: 20px;
+    }
+
+    .mini-player {
+        grid-template-columns: 1fr auto;
+        padding: 0 14px;
+    }
+
+    .player-progress {
+        position: absolute;
+
+        left: 0;
+        bottom: 0;
+
+        width: 100%;
+
+        justify-content: center;
+
+        padding: 4px 12px;
+
+        background: #090909;
+    }
+
+    #progress-bar {
+        flex: 1;
+        width: auto;
+    }
+
+    .music-grid {
+        grid-template-columns: repeat(
+            2,
+            minmax(0, 1fr)
+        );
+
+        gap: 18px;
+    }
+
+}
