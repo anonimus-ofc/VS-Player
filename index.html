@@ -227,7 +227,265 @@
 
     </div>
 
+<!-- ========================================
+     VS PLAYER - TELA COMPLETA
+======================================== -->
 
+<section id="player-screen" class="player-screen">
+
+    <div class="player-background"></div>
+
+    <div class="player-topbar">
+
+        <button
+            id="close-player"
+            class="player-back"
+            aria-label="Voltar"
+        >
+            ←
+        </button>
+
+        <div class="player-top-title">
+            TOCANDO AGORA
+        </div>
+
+        <button
+            id="player-more"
+            class="player-more"
+            aria-label="Mais opções"
+        >
+            ⋮
+        </button>
+
+    </div>
+
+
+    <div class="player-content">
+
+
+        <!-- VISUALIZADOR -->
+
+        <div
+            id="visualizer-container"
+            class="visualizer-container"
+        >
+
+            <canvas
+                id="visualizer-canvas"
+            ></canvas>
+
+
+            <div
+                id="visualizer-cover"
+                class="visualizer-cover"
+            >
+
+                <div class="default-cover">
+                    <span>♫</span>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- INFORMAÇÕES -->
+
+        <div class="player-info">
+
+            <h1
+                id="player-title"
+                class="player-title"
+            >
+                Nenhuma música
+            </h1>
+
+            <p
+                id="player-artist"
+                class="player-artist"
+            >
+                —
+            </p>
+
+        </div>
+
+
+        <!-- PROGRESSO -->
+
+        <div class="player-progress-area">
+
+            <input
+                type="range"
+                id="player-progress"
+                class="player-progress"
+                min="0"
+                max="100"
+                value="0"
+                step="0.01"
+            >
+
+            <div class="player-times">
+
+                <span id="player-current-time">
+                    0:00
+                </span>
+
+                <span id="player-total-time">
+                    0:00
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- CONTROLES -->
+
+        <div class="player-controls">
+
+            <button
+                id="player-shuffle"
+                class="player-secondary-control"
+            >
+                🔀
+            </button>
+
+
+            <button
+                id="player-previous"
+                class="player-control"
+            >
+                ⏮
+            </button>
+
+
+            <button
+                id="player-play"
+                class="player-play"
+            >
+                ▶
+            </button>
+
+
+            <button
+                id="player-next"
+                class="player-control"
+            >
+                ⏭
+            </button>
+
+
+            <button
+                id="player-repeat"
+                class="player-secondary-control"
+            >
+                🔁
+            </button>
+
+        </div>
+
+
+        <!-- AÇÕES -->
+
+        <div class="player-actions">
+
+            <button
+                id="player-favorite"
+                class="player-action"
+            >
+                ♡
+            </button>
+
+            <button
+                id="player-lyrics"
+                class="player-action"
+            >
+                ♪
+            </button>
+
+            <button
+                id="player-visualizer"
+                class="player-action"
+            >
+                ◉
+            </button>
+
+        </div>
+
+
+    </div>
+
+
+    <!-- PAINEL DO VISUALIZADOR -->
+
+    <div
+        id="visualizer-panel"
+        class="visualizer-panel"
+    >
+
+        <div class="visualizer-panel-header">
+
+            <h2>
+                Visualizador
+            </h2>
+
+            <button
+                id="close-visualizer"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <div class="visualizer-modes">
+
+            <button
+                class="visualizer-mode active"
+                data-spectrum-mode="all"
+            >
+                Todos
+            </button>
+
+            <button
+                class="visualizer-mode"
+                data-spectrum-mode="bass"
+            >
+                Graves
+            </button>
+
+            <button
+                class="visualizer-mode"
+                data-spectrum-mode="mid"
+            >
+                Médios
+            </button>
+
+            <button
+                class="visualizer-mode"
+                data-spectrum-mode="treble"
+            >
+                Agudos
+            </button>
+
+        </div>
+
+
+        <div class="visualizer-description">
+
+            <strong>
+                Visual Stério
+            </strong>
+
+            <span>
+                Visualização estéreo esquerda/direita
+            </span>
+
+        </div>
+
+    </div>
+
+</section>
     <!-- Arquivo de músicas -->
     <input
         type="file"
