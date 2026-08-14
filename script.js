@@ -1,7 +1,7 @@
 // ========================================
 // VS PLAYER
-// V0.2
-// Biblioteca + IndexedDB
+// V0.3
+// IndexedDB + Biblioteca + Player
 // ========================================
 
 
@@ -20,11 +20,17 @@ const STORE_NAME = "musics";
 // ELEMENTOS DA INTERFACE
 // ========================================
 
-const navItems = document.querySelectorAll(".nav-item");
-const pages = document.querySelectorAll(".page");
+const navItems =
+    document.querySelectorAll(".nav-item");
 
-const pageTitle = document.getElementById("page-title");
-const pageLabel = document.querySelector(".page-label");
+const pages =
+    document.querySelectorAll(".page");
+
+const pageTitle =
+    document.getElementById("page-title");
+
+const pageLabel =
+    document.querySelector(".page-label");
 
 const addMusicButton =
     document.getElementById("add-music");
@@ -48,87 +54,132 @@ const sortSelect =
     document.getElementById("sort-select");
 
 
+// Player
+const playButton =
+    document.getElementById("play-button");
+
+const previousButton =
+    document.getElementById("previous-button");
+
+const nextButton =
+    document.getElementById("next-button");
+
+const progressBar =
+    document.getElementById("progress-bar");
+
+const currentTimeElement =
+    document.getElementById("current-time");
+
+const totalTimeElement =
+    document.getElementById("total-time");
+
+const miniTitle =
+    document.getElementById("mini-title");
+
+const miniArtist =
+    document.getElementById("mini-artist");
+
+const miniCover =
+    document.querySelector(".mini-cover");
+
+
 // ========================================
-// ESTADO DO VS PLAYER
+// ESTADO
 // ========================================
+
+let db = null;
 
 let musicLibrary = [];
 
 let currentSort = "recent";
+
+let currentMusicIndex = -1;
+
+let currentMusic = null;
+
+let audio = new Audio();
+
+let currentObjectURL = null;
 
 
 // ========================================
 // INDEXEDDB
 // ========================================
 
-let db;
-
-
-// Abre/cria o banco
 function openDatabase() {
 
     return new Promise((resolve, reject) => {
 
-        const request = indexedDB.open(
-            DB_NAME,
-            DB_VERSION
-        );
+        const request =
+            indexedDB.open(
+                DB_NAME,
+                DB_VERSION
+            );
 
 
-        // Banco criado pela primeira vez
-        request.onupgradeneeded = event => {
+        request.onupgradeneeded =
+            event => {
 
-            const database =
-                event.target.result;
+                const database =
+                    event.target.result;
 
 
-            if (!database.objectStoreNames.contains(STORE_NAME)) {
+                if (
+                    !database
+                        .objectStoreNames
+                        .contains(STORE_NAME)
+                ) {
 
-                const store =
-                    database.createObjectStore(
-                        STORE_NAME,
+                    const store =
+                        database.createObjectStore(
+                            STORE_NAME,
+                            {
+                                keyPath: "id"
+                            }
+                        );
+
+
+                    store.createIndex(
+                        "dateAdded",
+                        "dateAdded",
                         {
-                            keyPath: "id"
+                            unique: false
                         }
                     );
 
+                }
 
-                store.createIndex(
-                    "dateAdded",
-                    "dateAdded",
-                    {
-                        unique: false
-                    }
+            };
+
+
+        request.onsuccess =
+            event => {
+
+                db =
+                    event.target.result;
+
+                console.log(
+                    "VS Player: IndexedDB conectado."
                 );
 
-            }
+                resolve(db);
 
-        };
-
-
-        request.onsuccess = event => {
-
-            db = event.target.result;
-
-            console.log(
-                "VS Player: IndexedDB conectado."
-            );
-
-            resolve(db);
-
-        };
+            };
 
 
-        request.onerror = event => {
+        request.onerror =
+            event => {
 
-            console.error(
-                "Erro ao abrir IndexedDB:",
-                event.target.error
-            );
+                console.error(
+                    "Erro ao abrir IndexedDB:",
+                    event.target.error
+                );
 
-            reject(event.target.error);
+                reject(
+                    event.target.error
+                );
 
-        };
+            };
 
     });
 
@@ -136,92 +187,97 @@ function openDatabase() {
 
 
 // ========================================
-// OPERAÇÕES DO BANCO
+// BANCO — SALVAR
 // ========================================
 
-
-// Salvar música
 function saveMusic(music) {
 
-    return new Promise((resolve, reject) => {
+    return new Promise(
+        (resolve, reject) => {
 
-        const transaction =
-            db.transaction(
-                STORE_NAME,
-                "readwrite"
-            );
-
-
-        const store =
-            transaction.objectStore(
-                STORE_NAME
-            );
+            const transaction =
+                db.transaction(
+                    STORE_NAME,
+                    "readwrite"
+                );
 
 
-        const request =
-            store.put(music);
+            const store =
+                transaction.objectStore(
+                    STORE_NAME
+                );
 
 
-        request.onsuccess = () => {
-
-            resolve();
-
-        };
+            const request =
+                store.put(music);
 
 
-        request.onerror = event => {
+            request.onsuccess =
+                () => resolve();
 
-            reject(
-                event.target.error
-            );
 
-        };
+            request.onerror =
+                event => {
 
-    });
+                    reject(
+                        event.target.error
+                    );
+
+                };
+
+        }
+    );
 
 }
 
 
-// Buscar todas as músicas
+// ========================================
+// BANCO — BUSCAR TODAS
+// ========================================
+
 function getAllMusic() {
 
-    return new Promise((resolve, reject) => {
+    return new Promise(
+        (resolve, reject) => {
 
-        const transaction =
-            db.transaction(
-                STORE_NAME,
-                "readonly"
-            );
-
-
-        const store =
-            transaction.objectStore(
-                STORE_NAME
-            );
+            const transaction =
+                db.transaction(
+                    STORE_NAME,
+                    "readonly"
+                );
 
 
-        const request =
-            store.getAll();
+            const store =
+                transaction.objectStore(
+                    STORE_NAME
+                );
 
 
-        request.onsuccess = () => {
-
-            resolve(
-                request.result
-            );
-
-        };
+            const request =
+                store.getAll();
 
 
-        request.onerror = event => {
+            request.onsuccess =
+                () => {
 
-            reject(
-                event.target.error
-            );
+                    resolve(
+                        request.result
+                    );
 
-        };
+                };
 
-    });
+
+            request.onerror =
+                event => {
+
+                    reject(
+                        event.target.error
+                    );
+
+                };
+
+        }
+    );
 
 }
 
@@ -230,8 +286,6 @@ function getAllMusic() {
 // UTILIDADES
 // ========================================
 
-
-// Gera um ID único
 function generateId() {
 
     return (
@@ -245,19 +299,28 @@ function generateId() {
 }
 
 
-// Formata duração
 function formatDuration(seconds) {
 
-    if (!seconds || !isFinite(seconds)) {
+    if (
+        !seconds ||
+        !isFinite(seconds)
+    ) {
+
         return "0:00";
+
     }
 
 
     const minutes =
-        Math.floor(seconds / 60);
+        Math.floor(
+            seconds / 60
+        );
+
 
     const remainingSeconds =
-        Math.floor(seconds % 60);
+        Math.floor(
+            seconds % 60
+        );
 
 
     return (
@@ -272,47 +335,63 @@ function formatDuration(seconds) {
 
 
 // ========================================
-// OBTER DURAÇÃO DO ÁUDIO
+// DURAÇÃO DO ÁUDIO
 // ========================================
 
 function getAudioDuration(file) {
 
     return new Promise(resolve => {
 
-        const audio =
-            document.createElement("audio");
+        const tempAudio =
+            document.createElement(
+                "audio"
+            );
 
 
         const url =
-            URL.createObjectURL(file);
+            URL.createObjectURL(
+                file
+            );
 
 
-        audio.preload = "metadata";
+        tempAudio.preload =
+            "metadata";
 
 
-        audio.onloadedmetadata = () => {
+        tempAudio.onloadedmetadata =
+            () => {
 
-            const duration =
-                audio.duration;
-
-
-            URL.revokeObjectURL(url);
-
-            resolve(duration);
-
-        };
+                const duration =
+                    tempAudio.duration;
 
 
-        audio.onerror = () => {
-
-            URL.revokeObjectURL(url);
-
-            resolve(0);
-
-        };
+                URL.revokeObjectURL(
+                    url
+                );
 
 
-        audio.src = url;
+                resolve(
+                    duration
+                );
+
+            };
+
+
+        tempAudio.onerror =
+            () => {
+
+                URL.revokeObjectURL(
+                    url
+                );
+
+
+                resolve(0);
+
+            };
+
+
+        tempAudio.src =
+            url;
 
     });
 
@@ -320,7 +399,7 @@ function getAudioDuration(file) {
 
 
 // ========================================
-// CRIAR CAPA PROVISÓRIA
+// CAPA PADRÃO
 // ========================================
 
 function createDefaultCover() {
@@ -335,13 +414,15 @@ function createDefaultCover() {
 
 
 // ========================================
-// CRIAR CARD DA MÚSICA
+// CARD DA MÚSICA
 // ========================================
 
 function createMusicCard(music) {
 
     const card =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
 
     card.className =
@@ -353,38 +434,67 @@ function createMusicCard(music) {
 
 
     const cover =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
 
     cover.className =
         "music-cover";
 
 
-    // Se futuramente tivermos capa real,
-    // ela será colocada aqui.
     cover.innerHTML =
         createDefaultCover();
 
 
     const title =
-        document.createElement("h3");
+        document.createElement(
+            "h3"
+        );
 
 
     title.textContent =
-        music.title || "Título desconhecido";
+        music.title ||
+        "Título desconhecido";
 
 
     const artist =
-        document.createElement("p");
+        document.createElement(
+            "p"
+        );
 
 
     artist.textContent =
-        music.artist || "Artista desconhecido";
+        music.artist ||
+        "Artista desconhecido";
 
 
-    card.appendChild(cover);
-    card.appendChild(title);
-    card.appendChild(artist);
+    card.appendChild(
+        cover
+    );
+
+
+    card.appendChild(
+        title
+    );
+
+
+    card.appendChild(
+        artist
+    );
+
+
+    // Clique no card
+    card.addEventListener(
+        "click",
+        () => {
+
+            playMusicFromLibrary(
+                music.id
+            );
+
+        }
+    );
 
 
     return card;
@@ -398,16 +508,21 @@ function createMusicCard(music) {
 
 function renderLibrary() {
 
-    musicGrid.innerHTML = "";
+    musicGrid.innerHTML =
+        "";
 
 
-    if (!musicLibrary.length) {
+    if (
+        !musicLibrary.length
+    ) {
 
         emptyLibrary.style.display =
             "flex";
 
+
         musicCount.textContent =
             "0 músicas";
+
 
         return;
 
@@ -433,15 +548,21 @@ function renderLibrary() {
     );
 
 
-    sortedMusic.forEach(music => {
+    sortedMusic.forEach(
+        music => {
 
-        const card =
-            createMusicCard(music);
+            const card =
+                createMusicCard(
+                    music
+                );
 
 
-        musicGrid.appendChild(card);
+            musicGrid.appendChild(
+                card
+            );
 
-    });
+        }
+    );
 
 }
 
@@ -452,8 +573,9 @@ function renderLibrary() {
 
 function sortMusic(list) {
 
-    switch (currentSort) {
-
+    switch (
+        currentSort
+    ) {
 
         case "recent":
 
@@ -561,13 +683,19 @@ function sortMusic(list) {
 
 async function importMusic(files) {
 
-    if (!files.length) {
+    if (
+        !files.length
+    ) {
+
         return;
+
     }
 
 
-    // Limite de 50 por importação
-    if (files.length > MAX_MUSIC_IMPORT) {
+    if (
+        files.length >
+        MAX_MUSIC_IMPORT
+    ) {
 
         alert(
             `Você pode adicionar no máximo ${MAX_MUSIC_IMPORT} músicas por vez.`
@@ -582,11 +710,15 @@ async function importMusic(files) {
         0;
 
 
-    for (const file of files) {
+    for (
+        const file of files
+    ) {
 
-
-        // Verifica se é áudio
-        if (!file.type.startsWith("audio/")) {
+        if (
+            !file.type.startsWith(
+                "audio/"
+            )
+        ) {
 
             continue;
 
@@ -600,7 +732,9 @@ async function importMusic(files) {
 
 
         const duration =
-            await getAudioDuration(file);
+            await getAudioDuration(
+                file
+            );
 
 
         const music = {
@@ -609,21 +743,17 @@ async function importMusic(files) {
                 generateId(),
 
 
-            // Arquivo original
             file:
                 file,
 
 
-            // Nome provisório
             title:
-                file.name
-                    .replace(
-                        /\.[^/.]+$/,
-                        ""
-                    ),
+                file.name.replace(
+                    /\.[^/.]+$/,
+                    ""
+                ),
 
 
-            // Ainda vamos ler os metadados
             artist:
                 "Artista desconhecido",
 
@@ -640,32 +770,26 @@ async function importMusic(files) {
                 Date.now(),
 
 
-            // Pasta padrão
             folder:
                 null,
 
 
-            // Favorito
             favorite:
                 false,
 
 
-            // Estatísticas
             playCount:
                 0,
 
 
-            // Posição salva
             position:
                 0,
 
 
-            // Letra
             lyrics:
                 null,
 
 
-            // Vídeo YouTube
             youtube:
                 null
 
@@ -687,7 +811,9 @@ async function importMusic(files) {
             imported++;
 
 
-        } catch (error) {
+        } catch (
+            error
+        ) {
 
             console.error(
                 "Erro ao salvar música:",
@@ -710,7 +836,7 @@ async function importMusic(files) {
 
 
 // ========================================
-// INPUT DE MÚSICAS
+// INPUT
 // ========================================
 
 musicInput.addEventListener(
@@ -728,16 +854,15 @@ musicInput.addEventListener(
         );
 
 
-        // Permite selecionar
-        // o mesmo arquivo novamente.
-        musicInput.value = "";
+        musicInput.value =
+            "";
 
     }
 );
 
 
 // ========================================
-// BOTÕES DE ADICIONAR
+// ABRIR SELETOR
 // ========================================
 
 function openMusicSelector() {
@@ -772,6 +897,535 @@ sortSelect.addEventListener(
 
 
         renderLibrary();
+
+    }
+);
+
+
+// ========================================
+// PLAYER
+// ========================================
+
+
+// Encontra música pelo ID
+function findMusicById(id) {
+
+    return musicLibrary.find(
+        music =>
+            music.id === id
+    );
+
+}
+
+
+// Carrega música
+async function playMusicFromLibrary(
+    musicId
+) {
+
+    const music =
+        findMusicById(
+            musicId
+        );
+
+
+    if (!music) {
+
+        console.error(
+            "Música não encontrada."
+        );
+
+        return;
+
+    }
+
+
+    // Descobre índice
+    currentMusicIndex =
+        musicLibrary.findIndex(
+            item =>
+                item.id ===
+                musicId
+        );
+
+
+    currentMusic =
+        music;
+
+
+    // Remove URL anterior
+    if (
+        currentObjectURL
+    ) {
+
+        URL.revokeObjectURL(
+            currentObjectURL
+        );
+
+    }
+
+
+    // Cria URL para o arquivo
+    currentObjectURL =
+        URL.createObjectURL(
+            music.file
+        );
+
+
+    // Define áudio
+    audio.src =
+        currentObjectURL;
+
+
+    // Começa do início
+    audio.currentTime =
+        music.position || 0;
+
+
+    // Atualiza interface
+    updateMiniPlayer(
+        music
+    );
+
+
+    try {
+
+        await audio.play();
+
+        updatePlayButton();
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Não foi possível reproduzir:",
+            error
+        );
+
+        updatePlayButton();
+
+    }
+
+}
+
+
+// Atualiza informações do player
+function updateMiniPlayer(
+    music
+) {
+
+    miniTitle.textContent =
+        music.title ||
+        "Título desconhecido";
+
+
+    miniArtist.textContent =
+        music.artist ||
+        "Artista desconhecido";
+
+
+    totalTimeElement.textContent =
+        formatDuration(
+            music.duration
+        );
+
+
+    currentTimeElement.textContent =
+        formatDuration(
+            music.position || 0
+        );
+
+
+    progressBar.value =
+        music.duration
+            ? (
+                (
+                    music.position ||
+                    0
+                ) /
+                music.duration
+            ) *
+            100
+            : 0;
+
+
+    miniCover.innerHTML =
+        createDefaultCover();
+
+}
+
+
+// ========================================
+// PLAY / PAUSE
+// ========================================
+
+playButton.addEventListener(
+    "click",
+    async () => {
+
+        if (!currentMusic) {
+
+            // Se nenhuma música estiver
+            // selecionada, tenta tocar
+            // a primeira da biblioteca.
+
+            if (
+                musicLibrary.length
+            ) {
+
+                await playMusicFromLibrary(
+                    musicLibrary[0].id
+                );
+
+            }
+
+            return;
+
+        }
+
+
+        if (
+            audio.paused
+        ) {
+
+            try {
+
+                await audio.play();
+
+            } catch (
+                error
+            ) {
+
+                console.error(
+                    error
+                );
+
+            }
+
+        } else {
+
+            audio.pause();
+
+        }
+
+
+        updatePlayButton();
+
+    }
+);
+
+
+// ========================================
+// BOTÃO PLAY
+// ========================================
+
+function updatePlayButton() {
+
+    playButton.textContent =
+        audio.paused
+            ? "▶"
+            : "Ⅱ";
+
+}
+
+
+// ========================================
+// TEMPO DA MÚSICA
+// ========================================
+
+audio.addEventListener(
+    "timeupdate",
+    () => {
+
+        if (
+            !currentMusic
+        ) {
+
+            return;
+
+        }
+
+
+        const current =
+            audio.currentTime;
+
+
+        const duration =
+            audio.duration ||
+            currentMusic.duration ||
+            0;
+
+
+        currentTimeElement.textContent =
+            formatDuration(
+                current
+            );
+
+
+        totalTimeElement.textContent =
+            formatDuration(
+                duration
+            );
+
+
+        if (
+            duration > 0
+        ) {
+
+            progressBar.value =
+                (
+                    current /
+                    duration
+                ) *
+                100;
+
+        }
+
+    }
+);
+
+
+// ========================================
+// DURAÇÃO CARREGADA
+// ========================================
+
+audio.addEventListener(
+    "loadedmetadata",
+    () => {
+
+        if (
+            !currentMusic
+        ) {
+
+            return;
+
+        }
+
+
+        totalTimeElement.textContent =
+            formatDuration(
+                audio.duration
+            );
+
+    }
+);
+
+
+// ========================================
+// BARRA DE PROGRESSO
+// ========================================
+
+progressBar.addEventListener(
+    "input",
+    () => {
+
+        if (
+            !audio.duration
+        ) {
+
+            return;
+
+        }
+
+
+        const percentage =
+            Number(
+                progressBar.value
+            );
+
+
+        audio.currentTime =
+            (
+                percentage /
+                100
+            ) *
+            audio.duration;
+
+    }
+);
+
+
+// ========================================
+// MÚSICA TERMINOU
+// ========================================
+
+audio.addEventListener(
+    "ended",
+    () => {
+
+        playNextMusic();
+
+    }
+);
+
+
+// ========================================
+// PRÓXIMA
+// ========================================
+
+function playNextMusic() {
+
+    if (
+        !musicLibrary.length
+    ) {
+
+        return;
+
+    }
+
+
+    let nextIndex =
+        currentMusicIndex + 1;
+
+
+    if (
+        nextIndex >=
+        musicLibrary.length
+    ) {
+
+        nextIndex = 0;
+
+    }
+
+
+    const nextMusic =
+        musicLibrary[
+            nextIndex
+        ];
+
+
+    playMusicFromLibrary(
+        nextMusic.id
+    );
+
+}
+
+
+nextButton.addEventListener(
+    "click",
+    () => {
+
+        playNextMusic();
+
+    }
+);
+
+
+// ========================================
+// ANTERIOR
+// ========================================
+
+function playPreviousMusic() {
+
+    if (
+        !musicLibrary.length
+    ) {
+
+        return;
+
+    }
+
+
+    let previousIndex =
+        currentMusicIndex - 1;
+
+
+    if (
+        previousIndex < 0
+    ) {
+
+        previousIndex =
+            musicLibrary.length - 1;
+
+    }
+
+
+    const previousMusic =
+        musicLibrary[
+            previousIndex
+        ];
+
+
+    playMusicFromLibrary(
+        previousMusic.id
+    );
+
+}
+
+
+previousButton.addEventListener(
+    "click",
+    () => {
+
+        playPreviousMusic();
+
+    }
+);
+
+
+// ========================================
+// SALVAR POSIÇÃO
+// ========================================
+
+let lastPositionSave =
+    0;
+
+
+audio.addEventListener(
+    "timeupdate",
+    async () => {
+
+        if (
+            !currentMusic
+        ) {
+
+            return;
+
+        }
+
+
+        const now =
+            Date.now();
+
+
+        // Evita escrever no IndexedDB
+        // dezenas de vezes por segundo.
+        if (
+            now -
+            lastPositionSave <
+            3000
+        ) {
+
+            return;
+
+        }
+
+
+        lastPositionSave =
+            now;
+
+
+        currentMusic.position =
+            audio.currentTime;
+
+
+        try {
+
+            await saveMusic(
+                currentMusic
+            );
+
+        } catch (
+            error
+        ) {
+
+            console.error(
+                "Erro ao salvar posição:",
+                error
+            );
+
+        }
 
     }
 );
@@ -816,7 +1470,9 @@ const pageNames = {
 };
 
 
-function changePage(pageName) {
+function changePage(
+    pageName
+) {
 
     const page =
         document.getElementById(
@@ -825,17 +1481,21 @@ function changePage(pageName) {
 
 
     if (!page) {
+
         return;
+
     }
 
 
-    navItems.forEach(item => {
+    navItems.forEach(
+        item => {
 
-        item.classList.remove(
-            "active"
-        );
+            item.classList.remove(
+                "active"
+            );
 
-    });
+        }
+    );
 
 
     const activeButton =
@@ -844,7 +1504,9 @@ function changePage(pageName) {
         );
 
 
-    if (activeButton) {
+    if (
+        activeButton
+    ) {
 
         activeButton.classList.add(
             "active"
@@ -853,13 +1515,15 @@ function changePage(pageName) {
     }
 
 
-    pages.forEach(page => {
+    pages.forEach(
+        page => {
 
-        page.classList.remove(
-            "active-page"
-        );
+            page.classList.remove(
+                "active-page"
+            );
 
-    });
+        }
+    );
 
 
     page.classList.add(
@@ -867,13 +1531,20 @@ function changePage(pageName) {
     );
 
 
-    if (pageNames[pageName]) {
+    if (
+        pageNames[pageName]
+    ) {
 
         pageLabel.textContent =
-            pageNames[pageName].label;
+            pageNames[
+                pageName
+            ].label;
+
 
         pageTitle.textContent =
-            pageNames[pageName].title;
+            pageNames[
+                pageName
+            ].title;
 
     }
 
@@ -886,20 +1557,22 @@ function changePage(pageName) {
 }
 
 
-navItems.forEach(item => {
+navItems.forEach(
+    item => {
 
-    item.addEventListener(
-        "click",
-        () => {
+        item.addEventListener(
+            "click",
+            () => {
 
-            changePage(
-                item.dataset.page
-            );
+                changePage(
+                    item.dataset.page
+                );
 
-        }
-    );
+            }
+        );
 
-});
+    }
+);
 
 
 // ========================================
@@ -910,20 +1583,16 @@ async function initializeVSPlayer() {
 
     try {
 
-        // Abre banco
         await openDatabase();
 
 
-        // Carrega músicas salvas
         musicLibrary =
             await getAllMusic();
 
 
-        // Mostra biblioteca
         renderLibrary();
 
 
-        // Recupera última página
         const lastPage =
             localStorage.getItem(
                 "vsplayer-last-page"
@@ -950,21 +1619,26 @@ async function initializeVSPlayer() {
         }
 
 
+        updatePlayButton();
+
+
         console.log(
             "VS Player iniciado."
         );
 
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
-            "Não foi possível iniciar o VS Player:",
+            "Erro ao iniciar VS Player:",
             error
         );
 
 
         alert(
-            "Não foi possível inicializar o armazenamento do VS Player."
+            "Não foi possível inicializar o VS Player."
         );
 
     }
