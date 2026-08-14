@@ -1,7 +1,9 @@
 // ========================================
 // VS PLAYER
-// V0.3
+// V0.4
 // IndexedDB + Biblioteca + Player
+// Tela completa do Player
+// Visualizador — estrutura inicial
 // ========================================
 
 
@@ -54,7 +56,10 @@ const sortSelect =
     document.getElementById("sort-select");
 
 
-// Player
+// ========================================
+// MINI PLAYER
+// ========================================
+
 const playButton =
     document.getElementById("play-button");
 
@@ -84,6 +89,68 @@ const miniCover =
 
 
 // ========================================
+// TELA COMPLETA DO PLAYER
+// ========================================
+
+const playerScreen =
+    document.getElementById("player-screen");
+
+const closePlayerButton =
+    document.getElementById("close-player");
+
+const playerTitle =
+    document.getElementById("player-title");
+
+const playerArtist =
+    document.getElementById("player-artist");
+
+const playerPlay =
+    document.getElementById("player-play");
+
+const playerPrevious =
+    document.getElementById("player-previous");
+
+const playerNext =
+    document.getElementById("player-next");
+
+const playerProgress =
+    document.getElementById("player-progress");
+
+const playerCurrentTime =
+    document.getElementById("player-current-time");
+
+const playerTotalTime =
+    document.getElementById("player-total-time");
+
+const playerFavorite =
+    document.getElementById("player-favorite");
+
+const visualizerButton =
+    document.getElementById("player-visualizer");
+
+const visualizerPanel =
+    document.getElementById("visualizer-panel");
+
+const closeVisualizer =
+    document.getElementById("close-visualizer");
+
+const visualizerModes =
+    document.querySelectorAll(
+        ".visualizer-mode"
+    );
+
+const visualizerCanvas =
+    document.getElementById(
+        "visualizer-canvas"
+    );
+
+const visualizerCover =
+    document.getElementById(
+        "visualizer-cover"
+    );
+
+
+// ========================================
 // ESTADO
 // ========================================
 
@@ -101,6 +168,28 @@ let audio = new Audio();
 
 let currentObjectURL = null;
 
+let lastPositionSave = 0;
+
+
+// ========================================
+// VISUALIZADOR
+// ========================================
+
+// Modo atual do espectro.
+//
+// all    = todas as frequências
+// bass   = graves
+// mid    = médios
+// treble = agudos
+
+let spectrumMode = "all";
+
+
+// Futuramente será usado pelo
+// sistema real do Visual Stério.
+
+let visualStereoEnabled = true;
+
 
 // ========================================
 // INDEXEDDB
@@ -108,80 +197,87 @@ let currentObjectURL = null;
 
 function openDatabase() {
 
-    return new Promise((resolve, reject) => {
+    return new Promise(
+        (resolve, reject) => {
 
-        const request =
-            indexedDB.open(
-                DB_NAME,
-                DB_VERSION
-            );
-
-
-        request.onupgradeneeded =
-            event => {
-
-                const database =
-                    event.target.result;
+            const request =
+                indexedDB.open(
+                    DB_NAME,
+                    DB_VERSION
+                );
 
 
-                if (
-                    !database
-                        .objectStoreNames
-                        .contains(STORE_NAME)
-                ) {
+            request.onupgradeneeded =
+                event => {
 
-                    const store =
-                        database.createObjectStore(
-                            STORE_NAME,
+                    const database =
+                        event.target.result;
+
+
+                    if (
+                        !database
+                            .objectStoreNames
+                            .contains(
+                                STORE_NAME
+                            )
+                    ) {
+
+                        const store =
+                            database.createObjectStore(
+                                STORE_NAME,
+                                {
+                                    keyPath: "id"
+                                }
+                            );
+
+
+                        store.createIndex(
+                            "dateAdded",
+                            "dateAdded",
                             {
-                                keyPath: "id"
+                                unique: false
                             }
                         );
 
+                    }
 
-                    store.createIndex(
-                        "dateAdded",
-                        "dateAdded",
-                        {
-                            unique: false
-                        }
+                };
+
+
+            request.onsuccess =
+                event => {
+
+                    db =
+                        event.target.result;
+
+
+                    console.log(
+                        "VS Player: IndexedDB conectado."
                     );
 
-                }
 
-            };
+                    resolve(db);
 
-
-        request.onsuccess =
-            event => {
-
-                db =
-                    event.target.result;
-
-                console.log(
-                    "VS Player: IndexedDB conectado."
-                );
-
-                resolve(db);
-
-            };
+                };
 
 
-        request.onerror =
-            event => {
+            request.onerror =
+                event => {
 
-                console.error(
-                    "Erro ao abrir IndexedDB:",
-                    event.target.error
-                );
+                    console.error(
+                        "Erro ao abrir IndexedDB:",
+                        event.target.error
+                    );
 
-                reject(
-                    event.target.error
-                );
 
-            };
+                    reject(
+                        event.target.error
+                    );
 
-    });
+                };
+
+        }
+    );
 
 }
 
@@ -328,7 +424,10 @@ function formatDuration(seconds) {
         ":" +
         remainingSeconds
             .toString()
-            .padStart(2, "0")
+            .padStart(
+                2,
+                "0"
+            )
     );
 
 }
@@ -340,60 +439,62 @@ function formatDuration(seconds) {
 
 function getAudioDuration(file) {
 
-    return new Promise(resolve => {
+    return new Promise(
+        resolve => {
 
-        const tempAudio =
-            document.createElement(
-                "audio"
-            );
-
-
-        const url =
-            URL.createObjectURL(
-                file
-            );
-
-
-        tempAudio.preload =
-            "metadata";
-
-
-        tempAudio.onloadedmetadata =
-            () => {
-
-                const duration =
-                    tempAudio.duration;
-
-
-                URL.revokeObjectURL(
-                    url
+            const tempAudio =
+                document.createElement(
+                    "audio"
                 );
 
 
-                resolve(
-                    duration
-                );
-
-            };
-
-
-        tempAudio.onerror =
-            () => {
-
-                URL.revokeObjectURL(
-                    url
+            const url =
+                URL.createObjectURL(
+                    file
                 );
 
 
-                resolve(0);
+            tempAudio.preload =
+                "metadata";
 
-            };
+
+            tempAudio.onloadedmetadata =
+                () => {
+
+                    const duration =
+                        tempAudio.duration;
 
 
-        tempAudio.src =
-            url;
+                    URL.revokeObjectURL(
+                        url
+                    );
 
-    });
+
+                    resolve(
+                        duration
+                    );
+
+                };
+
+
+            tempAudio.onerror =
+                () => {
+
+                    URL.revokeObjectURL(
+                        url
+                    );
+
+
+                    resolve(0);
+
+                };
+
+
+            tempAudio.src =
+                url;
+
+        }
+    );
 
 }
 
@@ -484,7 +585,6 @@ function createMusicCard(music) {
     );
 
 
-    // Clique no card
     card.addEventListener(
         "click",
         () => {
@@ -603,8 +703,10 @@ function sortMusic(list) {
 
             list.sort(
                 (a, b) =>
-                    a.title.localeCompare(
-                        b.title,
+                    (
+                        a.title || ""
+                    ).localeCompare(
+                        b.title || "",
                         "pt-BR"
                     )
             );
@@ -616,8 +718,10 @@ function sortMusic(list) {
 
             list.sort(
                 (a, b) =>
-                    b.title.localeCompare(
-                        a.title,
+                    (
+                        b.title || ""
+                    ).localeCompare(
+                        a.title || "",
                         "pt-BR"
                     )
             );
@@ -629,8 +733,10 @@ function sortMusic(list) {
 
             list.sort(
                 (a, b) =>
-                    a.artist.localeCompare(
-                        b.artist,
+                    (
+                        a.artist || ""
+                    ).localeCompare(
+                        b.artist || "",
                         "pt-BR"
                     )
             );
@@ -642,8 +748,10 @@ function sortMusic(list) {
 
             list.sort(
                 (a, b) =>
-                    a.album.localeCompare(
-                        b.album,
+                    (
+                        a.album || ""
+                    ).localeCompare(
+                        b.album || "",
                         "pt-BR"
                     )
             );
@@ -655,8 +763,12 @@ function sortMusic(list) {
 
             list.sort(
                 (a, b) =>
-                    b.playCount -
-                    a.playCount
+                    (
+                        b.playCount || 0
+                    ) -
+                    (
+                        a.playCount || 0
+                    )
             );
 
             break;
@@ -666,8 +778,12 @@ function sortMusic(list) {
 
             list.sort(
                 (a, b) =>
-                    b.duration -
-                    a.duration
+                    (
+                        b.duration || 0
+                    ) -
+                    (
+                        a.duration || 0
+                    )
             );
 
             break;
@@ -906,7 +1022,6 @@ sortSelect.addEventListener(
 // PLAYER
 // ========================================
 
-
 // Encontra música pelo ID
 function findMusicById(id) {
 
@@ -918,7 +1033,95 @@ function findMusicById(id) {
 }
 
 
-// Carrega música
+// ========================================
+// ABRIR TELA COMPLETA
+// ========================================
+
+function openFullPlayer(
+    music
+) {
+
+    if (
+        !playerScreen
+    ) {
+
+        return;
+
+    }
+
+
+    playerScreen.classList.add(
+        "open"
+    );
+
+
+    playerTitle.textContent =
+        music.title ||
+        "Título desconhecido";
+
+
+    playerArtist.textContent =
+        music.artist ||
+        "Artista desconhecido";
+
+
+    playerTotalTime.textContent =
+        formatDuration(
+            music.duration
+        );
+
+
+    playerCurrentTime.textContent =
+        formatDuration(
+            music.position || 0
+        );
+
+
+    playerProgress.value =
+        music.duration
+            ? (
+                (
+                    music.position || 0
+                ) /
+                music.duration
+            ) * 100
+            : 0;
+
+
+    updateFullPlayerCover(
+        music
+    );
+
+}
+
+
+// ========================================
+// ATUALIZAR CAPA DA TELA COMPLETA
+// ========================================
+
+function updateFullPlayerCover(
+    music
+) {
+
+    if (
+        !visualizerCover
+    ) {
+
+        return;
+
+    }
+
+
+    visualizerCover.innerHTML =
+        createDefaultCover();
+
+}
+
+
+// ========================================
+// CARREGAR E REPRODUZIR MÚSICA
+// ========================================
+
 async function playMusicFromLibrary(
     musicId
 ) {
@@ -940,7 +1143,6 @@ async function playMusicFromLibrary(
     }
 
 
-    // Descobre índice
     currentMusicIndex =
         musicLibrary.findIndex(
             item =>
@@ -953,6 +1155,12 @@ async function playMusicFromLibrary(
         music;
 
 
+    // Abre a tela completa
+    openFullPlayer(
+        music
+    );
+
+
     // Remove URL anterior
     if (
         currentObjectURL
@@ -962,10 +1170,13 @@ async function playMusicFromLibrary(
             currentObjectURL
         );
 
+        currentObjectURL =
+            null;
+
     }
 
 
-    // Cria URL para o arquivo
+    // Cria URL do arquivo
     currentObjectURL =
         URL.createObjectURL(
             music.file
@@ -977,12 +1188,12 @@ async function playMusicFromLibrary(
         currentObjectURL;
 
 
-    // Começa do início
+    // Começa da posição salva
     audio.currentTime =
         music.position || 0;
 
 
-    // Atualiza interface
+    // Atualiza mini player
     updateMiniPlayer(
         music
     );
@@ -992,7 +1203,10 @@ async function playMusicFromLibrary(
 
         await audio.play();
 
+
         updatePlayButton();
+        updateFullPlayButton();
+
 
     } catch (
         error
@@ -1003,14 +1217,19 @@ async function playMusicFromLibrary(
             error
         );
 
+
         updatePlayButton();
+        updateFullPlayButton();
 
     }
 
 }
 
 
-// Atualiza informações do player
+// ========================================
+// ATUALIZA MINI PLAYER
+// ========================================
+
 function updateMiniPlayer(
     music
 ) {
@@ -1057,7 +1276,7 @@ function updateMiniPlayer(
 
 
 // ========================================
-// PLAY / PAUSE
+// PLAY / PAUSE MINI PLAYER
 // ========================================
 
 playButton.addEventListener(
@@ -1065,10 +1284,6 @@ playButton.addEventListener(
     async () => {
 
         if (!currentMusic) {
-
-            // Se nenhuma música estiver
-            // selecionada, tenta tocar
-            // a primeira da biblioteca.
 
             if (
                 musicLibrary.length
@@ -1111,21 +1326,117 @@ playButton.addEventListener(
 
 
         updatePlayButton();
+        updateFullPlayButton();
 
     }
 );
 
 
 // ========================================
-// BOTÃO PLAY
+// BOTÃO PLAY MINI
 // ========================================
 
 function updatePlayButton() {
+
+    if (
+        !playButton
+    ) {
+
+        return;
+
+    }
+
 
     playButton.textContent =
         audio.paused
             ? "▶"
             : "Ⅱ";
+
+}
+
+
+// ========================================
+// BOTÃO PLAY TELA COMPLETA
+// ========================================
+
+function updateFullPlayButton() {
+
+    if (
+        !playerPlay
+    ) {
+
+        return;
+
+    }
+
+
+    playerPlay.textContent =
+        audio.paused
+            ? "▶"
+            : "Ⅱ";
+
+}
+
+
+// ========================================
+// PLAY / PAUSE TELA COMPLETA
+// ========================================
+
+if (
+    playerPlay
+) {
+
+    playerPlay.addEventListener(
+        "click",
+        async () => {
+
+            if (!currentMusic) {
+
+                if (
+                    musicLibrary.length
+                ) {
+
+                    await playMusicFromLibrary(
+                        musicLibrary[0].id
+                    );
+
+                }
+
+                return;
+
+            }
+
+
+            if (
+                audio.paused
+            ) {
+
+                try {
+
+                    await audio.play();
+
+                } catch (
+                    error
+                ) {
+
+                    console.error(
+                        error
+                    );
+
+                }
+
+            } else {
+
+                audio.pause();
+
+            }
+
+
+            updatePlayButton();
+            updateFullPlayButton();
+
+        }
+    );
 
 }
 
@@ -1182,6 +1493,47 @@ audio.addEventListener(
 
         }
 
+
+        // Tela completa
+
+        if (
+            playerCurrentTime
+        ) {
+
+            playerCurrentTime.textContent =
+                formatDuration(
+                    current
+                );
+
+        }
+
+
+        if (
+            playerTotalTime
+        ) {
+
+            playerTotalTime.textContent =
+                formatDuration(
+                    duration
+                );
+
+        }
+
+
+        if (
+            playerProgress &&
+            duration > 0
+        ) {
+
+            playerProgress.value =
+                (
+                    current /
+                    duration
+                ) *
+                100;
+
+        }
+
     }
 );
 
@@ -1203,17 +1555,33 @@ audio.addEventListener(
         }
 
 
+        const duration =
+            audio.duration;
+
+
         totalTimeElement.textContent =
             formatDuration(
-                audio.duration
+                duration
             );
+
+
+        if (
+            playerTotalTime
+        ) {
+
+            playerTotalTime.textContent =
+                formatDuration(
+                    duration
+                );
+
+        }
 
     }
 );
 
 
 // ========================================
-// BARRA DE PROGRESSO
+// BARRA MINI PLAYER
 // ========================================
 
 progressBar.addEventListener(
@@ -1244,6 +1612,46 @@ progressBar.addEventListener(
 
     }
 );
+
+
+// ========================================
+// BARRA TELA COMPLETA
+// ========================================
+
+if (
+    playerProgress
+) {
+
+    playerProgress.addEventListener(
+        "input",
+        () => {
+
+            if (
+                !audio.duration
+            ) {
+
+                return;
+
+            }
+
+
+            const percentage =
+                Number(
+                    playerProgress.value
+                );
+
+
+            audio.currentTime =
+                (
+                    percentage /
+                    100
+                ) *
+                audio.duration;
+
+        }
+    );
+
+}
 
 
 // ========================================
@@ -1313,6 +1721,26 @@ nextButton.addEventListener(
 
 
 // ========================================
+// PRÓXIMA — TELA COMPLETA
+// ========================================
+
+if (
+    playerNext
+) {
+
+    playerNext.addEventListener(
+        "click",
+        () => {
+
+            playNextMusic();
+
+        }
+    );
+
+}
+
+
+// ========================================
 // ANTERIOR
 // ========================================
 
@@ -1365,12 +1793,28 @@ previousButton.addEventListener(
 
 
 // ========================================
-// SALVAR POSIÇÃO
+// ANTERIOR — TELA COMPLETA
 // ========================================
 
-let lastPositionSave =
-    0;
+if (
+    playerPrevious
+) {
 
+    playerPrevious.addEventListener(
+        "click",
+        () => {
+
+            playPreviousMusic();
+
+        }
+    );
+
+}
+
+
+// ========================================
+// SALVAR POSIÇÃO
+// ========================================
 
 audio.addEventListener(
     "timeupdate",
@@ -1389,8 +1833,6 @@ audio.addEventListener(
             Date.now();
 
 
-        // Evita escrever no IndexedDB
-        // dezenas de vezes por segundo.
         if (
             now -
             lastPositionSave <
@@ -1429,6 +1871,285 @@ audio.addEventListener(
 
     }
 );
+
+
+// ========================================
+// FECHAR TELA COMPLETA
+// ========================================
+
+if (
+    closePlayerButton
+) {
+
+    closePlayerButton.addEventListener(
+        "click",
+        () => {
+
+            playerScreen.classList.remove(
+                "open"
+            );
+
+        }
+    );
+
+}
+
+
+// ========================================
+// ESC FECHA A TELA
+// ========================================
+
+document.addEventListener(
+    "keydown",
+    event => {
+
+        if (
+            event.key === "Escape"
+        ) {
+
+            if (
+                visualizerPanel &&
+                visualizerPanel.classList.contains(
+                    "open"
+                )
+            ) {
+
+                visualizerPanel.classList.remove(
+                    "open"
+                );
+
+                return;
+
+            }
+
+
+            if (
+                playerScreen &&
+                playerScreen.classList.contains(
+                    "open"
+                )
+            ) {
+
+                playerScreen.classList.remove(
+                    "open"
+                );
+
+            }
+
+        }
+
+    }
+);
+
+
+// ========================================
+// VISUALIZADOR — ABRIR
+// ========================================
+
+if (
+    visualizerButton
+) {
+
+    visualizerButton.addEventListener(
+        "click",
+        () => {
+
+            visualizerPanel.classList.add(
+                "open"
+            );
+
+        }
+    );
+
+}
+
+
+// ========================================
+// VISUALIZADOR — FECHAR
+// ========================================
+
+if (
+    closeVisualizer
+) {
+
+    closeVisualizer.addEventListener(
+        "click",
+        () => {
+
+            visualizerPanel.classList.remove(
+                "open"
+            );
+
+        }
+    );
+
+}
+
+
+// ========================================
+// MODOS DO ESPECTRO
+// ========================================
+
+visualizerModes.forEach(
+    button => {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                visualizerModes.forEach(
+                    item => {
+
+                        item.classList.remove(
+                            "active"
+                        );
+
+                    }
+                );
+
+
+                button.classList.add(
+                    "active"
+                );
+
+
+                spectrumMode =
+                    button.dataset
+                        .spectrumMode;
+
+
+                console.log(
+                    "VS Player — modo do espectro:",
+                    spectrumMode
+                );
+
+            }
+        );
+
+    }
+);
+
+
+// ========================================
+// VISUAL STÉRIO
+// ========================================
+//
+// O Visual Stério NÃO é um modo.
+//
+// Ele permanece ativo dentro
+// do sistema de visualização.
+//
+// Futuramente:
+//
+// Áudio
+//   ↓
+// AudioContext
+//   ↓
+// ChannelSplitter
+//   ├── LEFT
+//   └── RIGHT
+//        ↓
+//     Analisadores
+//        ↓
+//   Visual Stério
+//        ↓
+//      Canvas
+//
+// O spectrumMode apenas decide
+// quais frequências serão exibidas.
+//
+// ========================================
+
+function getSpectrumFrequencyRange() {
+
+    switch (
+        spectrumMode
+    ) {
+
+        case "bass":
+
+            return {
+                min: 20,
+                max: 250
+            };
+
+
+        case "mid":
+
+            return {
+                min: 250,
+                max: 4000
+            };
+
+
+        case "treble":
+
+            return {
+                min: 4000,
+                max: 20000
+            };
+
+
+        case "all":
+
+        default:
+
+            return {
+                min: 20,
+                max: 20000
+            };
+
+    }
+
+}
+
+
+// ========================================
+// FAVORITO — ESTRUTURA INICIAL
+// ========================================
+
+if (
+    playerFavorite
+) {
+
+    playerFavorite.addEventListener(
+        "click",
+        async () => {
+
+            if (
+                !currentMusic
+            ) {
+
+                return;
+
+            }
+
+
+            currentMusic.favorite =
+                !currentMusic.favorite;
+
+
+            await saveMusic(
+                currentMusic
+            );
+
+
+            playerFavorite.textContent =
+                currentMusic.favorite
+                    ? "♥"
+                    : "♡";
+
+
+            console.log(
+                currentMusic.favorite
+                    ? "Música favoritada."
+                    : "Música removida dos favoritos."
+            );
+
+        }
+    );
+
+}
 
 
 // ========================================
@@ -1620,6 +2341,7 @@ async function initializeVSPlayer() {
 
 
         updatePlayButton();
+        updateFullPlayButton();
 
 
         console.log(
